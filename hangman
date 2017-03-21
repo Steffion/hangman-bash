@@ -120,13 +120,11 @@ function handleInput() {
 }
 
 function getRandomWord() {
-  # if [[ -z $dictonary ]]; then
-    word=head -$((${RANDOM} % `wc -l < words.txt` + 1)) words.txt | tail -1
-
-    echo head -$((${RANDOM} % `wc -l < words.txt` + 1)) words.txt | tail -1
-  # else
-  #   word=head -$((${RANDOM} % `wc -l < $dictonary` + 1)) $dictonary | tail -1
-  # fi
+  if [[ -z $dictonary ]]; then
+    word=$(head -$((${RANDOM} % `wc -l < words.txt` + 1)) words.txt | tail -1)
+  else
+    word=$(head -$((${RANDOM} % `wc -l < $dictonary` + 1)) $dictonary | tail -1)
+  fi
 }
 
 #
@@ -154,7 +152,6 @@ wrongGuesses=0;
 printf "\ec"
 printf "Welkom bij Galgje. \n \n";
 printf "Using dictonary: $dictonary\n"
-printf "The word is: $word"
 
 while [[ !$gameover ]]; do
   printWord
