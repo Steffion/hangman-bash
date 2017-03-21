@@ -1,0 +1,165 @@
+#!/bin/bash
+
+# Hangman
+# By Merel Kokkeler and Stef de Goey
+# Assessment Operating Systems 1
+# 15-03-2017
+
+#
+# Functions
+#
+
+function printWord() {
+  #statements
+  echo $word;
+}
+
+function printWrongGuesses() {
+  #statements
+    echo "printWrongGuesses";
+}
+
+function printGallow() {
+  wrongGuesses=$1
+  case $wrongGuesses in
+    0)
+      echo "     ";
+      echo "     ";
+      echo "     ";
+      echo "     ";
+      echo "     ";
+      echo "|____";
+      ;;
+    1)
+      echo "     ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    2)
+      echo "____ ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    3)
+      echo "____ ";
+      echo "|/   ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    4)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    5)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    6)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "|  | ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    7)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "| /| ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    8)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "| /|\\";
+      echo "|    ";
+      echo "|____";
+      ;;
+    9)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "| /|\\";
+      echo "| /  ";
+      echo "|____";
+      ;;
+    10)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "| /|\\";
+      echo "| / \\";
+      echo "|____";
+      ;;
+  esac
+}
+
+function handleInput() {
+  #statements
+    echo "handleInput";
+    read
+}
+
+function getRandomWord() {
+  # if [[ -z $dictonary ]]; then
+    word=head -$((${RANDOM} % `wc -l < words.txt` + 1)) words.txt | tail -1
+
+    echo head -$((${RANDOM} % `wc -l < words.txt` + 1)) words.txt | tail -1
+  # else
+  #   word=head -$((${RANDOM} % `wc -l < $dictonary` + 1)) $dictonary | tail -1
+  # fi
+}
+
+#
+# Main program.
+#
+
+while  getopts ":w:d:" option; do
+  case "${option}" in
+    w)
+      word=${OPTARG}
+      ;;
+    d)
+      dictonary=${OPTARG}
+      ;;
+  esac
+done
+
+if [[ -z $word ]]; then
+  getRandomWord
+fi
+
+gameover=false;
+wrongGuesses=0;
+
+printf "\ec"
+printf "Welkom bij Galgje. \n \n";
+printf "Using dictonary: $dictonary\n"
+printf "The word is: $word"
+
+while [[ !$gameover ]]; do
+  printWord
+  printWrongGuesses
+  printGallow $wrongGuesses
+  handleInput
+  printf "\ec"
+done
