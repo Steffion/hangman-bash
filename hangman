@@ -15,6 +15,7 @@ function printWord() {
     local i
     local ans=$(echo $word | tr '[:upper:]' '[:lower:]')
 
+    echo $word
     # figure out positions of letter in the answer
     for (( i = 0; i < ${#word}; i++ )); do
         if [ "${ans:$i:1}" = "$c" ]; then
@@ -36,17 +37,22 @@ function printWord() {
     local start
     local end
     local p
+    
+
     for (( i = 0; i < ${#pos[@]}; i++ )); do
+        #p=${pos[$i]}
+        #c=${word:$p:1}
+        #p=$(($p+1))
+        #question=$(echo $question | sed s/_/"$c"/$p)
+
         p=${pos[$i]}
         c=${word:$p:1}
-        start=$(( ${pos[$i]} * 2 ))
-        end=$(( start + 2 ))
+        start=$(( ${pos[$i]}))
+        end=$(( start + 1 ))
 
         # better way to do string manipulation?
         question="${question:0:$start}$c ${question:end}"
     done
-
-    echo $question
 }
 
 function printWrongGuesses() {
@@ -160,7 +166,10 @@ function getRandomWord() {
   else
     word=$(head -$((${RANDOM} % `wc -l < $dictonary` + 1)) $dictonary | tail -1)
   fi
-  question=$word | tr [:alpha:] _ ;
+  for (( i=0; i<${#word}; i++ )); do
+  question+="_ "
+  done
+  echo $question
 }
 
 #
@@ -190,6 +199,8 @@ printf "Welkom bij Galgje. \n \n";
 printf "Using dictonary: $dictonary\n"
 
 while [[ !$gameover ]]; do
+ 
+  echo $question
   printWord
   printWrongGuesses
   printGallow $wrongGuesses
