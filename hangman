@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Hangman
-# By Merel Kokkeler and Stef de Goey
+# By Duncan Verbrugge and Stef de Goey
 # Assessment Operating Systems 1
 # 15-03-2017
 
@@ -10,8 +10,43 @@
 #
 
 function printWord() {
-  #statements
-  echo $word;
+    local c="$gues"
+    local pos=()
+    local i
+    local ans=$(echo $word | tr '[:upper:]' '[:lower:]')
+
+    # figure out positions of letter in the answer
+    for (( i = 0; i < ${#word}; i++ )); do
+        if [ "${ans:$i:1}" = "$c" ]; then
+            pos+=($i)
+        fi
+    done
+
+    # keep track of what the user has entered so far
+    letters+=($c)
+    echo "${letters[*]}"
+
+    # check for incorrect attempt
+    if [[ "${#pos}" = 0 ]]; then
+        let num_attempts-=1
+        return
+    fi
+
+    # translate positions to question positions and replace blanks with the letter
+    local start
+    local end
+    local p
+    for (( i = 0; i < ${#pos[@]}; i++ )); do
+        p=${pos[$i]}
+        c=${word:$p:1}
+        start=$(( ${pos[$i]} * 2 ))
+        end=$(( start + 2 ))
+
+        # better way to do string manipulation?
+        question="${question:0:$start}$c ${question:end}"
+    done
+
+    echo $question
 }
 
 function printWrongGuesses() {
@@ -116,7 +151,7 @@ function printGallow() {
 function handleInput() {
   #statements
     echo "handleInput";
-    read
+    read -n 1 gues
 }
 
 function getRandomWord() {
@@ -125,6 +160,7 @@ function getRandomWord() {
   else
     word=$(head -$((${RANDOM} % `wc -l < $dictonary` + 1)) $dictonary | tail -1)
   fi
+  question=$word | tr [:alpha:] _ ;
 }
 
 #
