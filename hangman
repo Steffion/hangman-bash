@@ -10,40 +10,28 @@
 #
 
 function printWord() {
-    local c="$gues"
     local pos=()
-    local i
-    local ans=$(echo $word | tr '[:upper:]' '[:lower:]')
 
-    #echo $word
-    # figure out positions of letter in the answer
+    local lowerCaseAnswer=$(echo $word | tr '[:upper:]' '[:lower:]')
+
     for (( i = 0; i < ${#word}; i++ )); do
-        if [ "${ans:$i:1}" = "$c" ]; then
+        if [ "${lowerCaseAnswer:$i:1}" = "$gues" ]; then
             pos+=($i)
         fi
     done
 
-    # keep track of what the user has entered so far
-    letters+=($c)
+    letters+=($gues)
     echo "${letters[*]}"
 
-    # check for incorrect attempt
     if [[ "${#pos}" = 0 ]]; then
         let wrongGuesses+=1
         return
     fi
 
-    # translate positions to question positions and replace blanks with the letter
-    local start
-    local end
-    local p
-
     for (( i = 0; i < ${#pos[@]}; i++ )); do
-        p=${pos[$i]}
-        c=${word:$p:1}
 	start=$(( ${pos[$i]} ))
 	end=$(( start + 1))
-        question="${question:0:$start}$c${question:$end}"
+        hiddenWord="${hiddenWord:0:$start}${word:${pos[$i]}:1}${hiddenWord:$end}"
     done
 }
 
@@ -143,8 +131,6 @@ function printGallow() {
       echo "| /|\\";
       echo "| / \\";
       echo "|____";
-
-	$gameover = true
       ;;
   esac
 }
@@ -162,9 +148,9 @@ function getRandomWord() {
     word=$(head -$((${RANDOM} % `wc -l < $dictonary` + 1)) $dictonary | tail -1)
   fi
   for (( i=0; i<${#word}; i++ )); do
-  question+="_"
+  hiddenWord+="_"
   done
-  echo $question
+  echo $hiddenWord
 }
 
 #
@@ -195,7 +181,7 @@ printf "Using dictonary: $dictonary\n"
 
 while [[ $wrongGuesses -lt 11 ]]; do
   printWord
-  echo $question
+  echo $hiddenWord
   printWrongGuesses
   printGallow $wrongGuesses
   handleInput
