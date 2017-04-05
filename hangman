@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Hangman
-# By Duncan Verbrugge and Stef de Goey
+# By Duncan Verbrugge (2113509) and Stef de Goey (2101087)
 # Assessment Operating Systems 1
 # 15-03-2017
 
@@ -9,42 +9,118 @@
 # Functions
 #
 
-function printWord() {
+function makeQuestion() {
+    local i
+    for (( i=0; i<${#word}; i++ )); do
+        if [[ "${word:$i:1}" =~ [[:space:]] ]]; then
+            question+="  "
+        else
+            question+="_ "
+        fi
+    done
+
+    attemptsLeft=10
+}
+
+function printGuesses() {
+  if [[ "${#letters[*]}" > 0 ]]; then
+      echo "Geprobeerde letters: ${letters[*]}"
+  fi
+}
+
+function printQuestion() {
+    echo -e "$question"
+}
+
+function requestInput() {
+    echo -en "Voer een leter in, "
+
+    local attempts="poging"
+    if [[ "$attemptsLeft" > 1 ]]; then
+        attempts+="en"
+    fi
+
+    echo -e "$attemptsLeft $attempts over."
+}
+
+function printWelcome() {
+    echo -e "Welkom bij Galgje. Veel plezier!"
+}
+
+function checkValidInput() {
+    # convert to lowercase
+    input=$(echo $input | tr '[:upper:]' '[:lower:]')
+
+    # make sure letter is alpha
+    if [[ "$input" =~ [^[:alpha:]] ]]; then
+        echo "Vul aub een geldige letter in."
+        return $(false)
+    fi
+
+    # check if letter has already been entered
+    if contains "${letters[@]}" "$input"; then
+        printGuesses
+        return $(false)
+    fi
+}
+
+function hanleInput() {
+    local c="$input"
     local pos=()
+    local i
+    local ans=$(echo $word | tr '[:upper:]' '[:lower:]')
 
-    local lowerCaseAnswer=$(echo $word | tr '[:upper:]' '[:lower:]')
-
+    # figure out positions of letter in the word
     for (( i = 0; i < ${#word}; i++ )); do
-        if [ "${lowerCaseAnswer:$i:1}" = "$gues" ]; then
+        if [ "${ans:$i:1}" = "$c" ]; then
             pos+=($i)
         fi
     done
 
-    letters+=($gues)
-    echo "${letters[*]}"
+    # keep track of what the user has entered so far
+    letters+=($c)
 
+    # check for incorrect attempt
     if [[ "${#pos}" = 0 ]]; then
-        let wrongGuesses+=1
+        let attemptsLeft-=1
         return
     fi
 
+    # translate positions to question positions and replace blanks with the letter
+    local start
+    local end
+    local p
     for (( i = 0; i < ${#pos[@]}; i++ )); do
-	start=$(( ${pos[$i]} ))
-	end=$(( start + 1))
-        hiddenWord="${hiddenWord:0:$start}${word:${pos[$i]}:1}${hiddenWord:$end}"
+        p=${pos[$i]}
+        c=${word:$p:1}
+        start=$(( ${pos[$i]} * 2 ))
+        end=$(( start + 2 ))
+
+        # better way to do string manipulation?
+        question="${question:0:$start}$c ${question:end}"
     done
 }
 
-function printWrongGuesses() {
-    #statements
-    #echo "printWrongGuesses";
-	return
+function checkGameOver() {
+    if [[ "$question" =~ _ ]]; then
+        return $(false)
+    fi
+
+    echo -e "Dat is correct, het woord is: $word"
+
+    local lettercount="${#letters[@]}"
+    local units="letter"
+    if [[ $lettercount > 1 ]]; then
+        units+="s"
+    fi
+
+    echo -e "Je hebt gewonnen met $lettercount $units."
+    echo -e "Goed gedaan, bedankt voor het spelen.\n"
 }
 
 function printGallow() {
-  wrongGuesses=$1
-  case $wrongGuesses in
-    1)
+  case $(expr 10 - $attemptsLeft) in
+    0)
       echo "     ";
       echo "     ";
       echo "     ";
@@ -52,8 +128,16 @@ function printGallow() {
       echo "     ";
       echo "|____";
       ;;
-    2)
+    1)
       echo "     ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    2)
+      echo "____ ";
       echo "|    ";
       echo "|    ";
       echo "|    ";
@@ -62,7 +146,7 @@ function printGallow() {
       ;;
     3)
       echo "____ ";
-      echo "|    ";
+      echo "|/   ";
       echo "|    ";
       echo "|    ";
       echo "|    ";
@@ -70,7 +154,7 @@ function printGallow() {
       ;;
     4)
       echo "____ ";
-      echo "|/   ";
+      echo "|/ | ";
       echo "|    ";
       echo "|    ";
       echo "|    ";
@@ -79,7 +163,7 @@ function printGallow() {
     5)
       echo "____ ";
       echo "|/ | ";
-      echo "|    ";
+      echo "|  O ";
       echo "|    ";
       echo "|    ";
       echo "|____";
@@ -88,7 +172,7 @@ function printGallow() {
       echo "____ ";
       echo "|/ | ";
       echo "|  O ";
-      echo "|    ";
+      echo "|  | ";
       echo "|    ";
       echo "|____";
       ;;
@@ -96,7 +180,7 @@ function printGallow() {
       echo "____ ";
       echo "|/ | ";
       echo "|  O ";
-      echo "|  | ";
+      echo "| /| ";
       echo "|    ";
       echo "|____";
       ;;
@@ -104,7 +188,7 @@ function printGallow() {
       echo "____ ";
       echo "|/ | ";
       echo "|  O ";
-      echo "| /| ";
+      echo "| /|\\";
       echo "|    ";
       echo "|____";
       ;;
@@ -113,18 +197,10 @@ function printGallow() {
       echo "|/ | ";
       echo "|  O ";
       echo "| /|\\";
-      echo "|    ";
-      echo "|____";
-      ;;
-    10)
-      echo "____ ";
-      echo "|/ | ";
-      echo "|  O ";
-      echo "| /|\\";
       echo "| /  ";
       echo "|____";
       ;;
-    11)
+    10)
       echo "____ ";
       echo "|/ | ";
       echo "|  O ";
@@ -135,10 +211,20 @@ function printGallow() {
   esac
 }
 
-function handleInput() {
-  #statements
-    #echo "handleInput";
-    read -n 1 gues
+function contains() {
+    # checks if the second argument (string) is in the first argument (array)
+    local e
+
+    for e in "${@:1:1}"; do
+        [[ "$e" == "$2" ]] && return $(true)
+    done
+
+    return $(false)
+}
+
+function failedGameOver() {
+    echo -e "Sorry, het woord was: $word"
+    echo -e "Bedankt voor het spelen en Tot ziens!\n"
 }
 
 function getRandomWord() {
@@ -147,47 +233,66 @@ function getRandomWord() {
   else
     word=$(head -$((${RANDOM} % `wc -l < $dictonary` + 1)) $dictonary | tail -1)
   fi
-  for (( i=0; i<${#word}; i++ )); do
-  hiddenWord+="_"
-  done
-  echo $hiddenWord
 }
 
 #
-# Main program.
+# Main program
 #
 
 while  getopts ":w:d:" option; do
   case "${option}" in
     w)
-      word=${OPTARG}
+      word=$(echo ${OPTARG} | tr '[:lower:]' '[:upper:]')
       ;;
     d)
       dictonary=${OPTARG}
       ;;
+    *)
+      echo "-${OPTARG} is geen geldig argument"
+      exit 1
+      ;;
   esac
 done
+
+if [[ -z $dictonary ]]; then
+  dictonary="words.txt"
+fi
+
+if [[ ! -f $dictonary ]]; then
+  echo -e "\nError: bestand niet gevonden $dictonary"
+  exit 1
+fi
 
 if [[ -z $word ]]; then
   getRandomWord
 fi
 
-gameover=false;
-wrongGuesses=0;
-
 printf "\ec"
-printf "Welkom bij Galgje. \n \n";
-printf "Using dictonary: $dictonary\n"
+printWelcome
 
-while [[ $wrongGuesses -lt 11 ]]; do
-  printWord
-  echo $hiddenWord
-  printWrongGuesses
-  printGallow $wrongGuesses
-  handleInput
-  printf "\ec"
+makeQuestion
+
+while [ $attemptsLeft != 0 ] ; do
+    printGuesses
+    printGallow
+    printQuestion
+
+    if checkGameOver; then
+        exit 0
+    fi
+
+    requestInput
+
+    read -n 1 -e input
+
+    if ! checkValidInput; then
+        printf "\ec"
+        continue
+    fi
+
+    hanleInput
+
+    printf "\ec"
 done
 
-printf "Game over! thanks for playing"
-read
-exit 1
+failedGameOver

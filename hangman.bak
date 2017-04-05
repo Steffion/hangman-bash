@@ -1,0 +1,241 @@
+#!/bin/bash
+
+# Hangman
+# By Duncan Verbrugge (2113509) and Stef de Goey (2101087)
+# Assessment Operating Systems 1
+# 15-03-2017
+
+#
+# Functions
+#
+
+function printWord() {
+    echo $hiddenWord
+}
+
+function isValidInput() {
+    guess=$(echo $guess | tr '[:upper:]' '[:lower:]')
+
+    if [[ "$guess" =~ [^[:alpha:]] ]]; then
+        echo "This is not a valid character!"
+        return $(false)
+    fi
+
+    if contains "${letters[@]}" "$guess"; then
+        printWord
+        return $(false)
+    fi
+}
+
+function printGuesses() {
+  if [[ "${#letters[*]}" > 0 ]]; then
+      echo "${letters[*]}"
+  fi
+}
+
+function printGallow() {
+  wrongGuesses=$1
+  case $wrongGuesses in
+    1)
+      echo "     ";
+      echo "     ";
+      echo "     ";
+      echo "     ";
+      echo "     ";
+      echo "|____";
+      ;;
+    2)
+      echo "     ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    3)
+      echo "____ ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    4)
+      echo "____ ";
+      echo "|/   ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    5)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|    ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    6)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "|    ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    7)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "|  | ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    8)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "| /| ";
+      echo "|    ";
+      echo "|____";
+      ;;
+    9)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "| /|\\";
+      echo "|    ";
+      echo "|____";
+      ;;
+    10)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "| /|\\";
+      echo "| /  ";
+      echo "|____";
+      ;;
+    11)
+      echo "____ ";
+      echo "|/ | ";
+      echo "|  O ";
+      echo "| /|\\";
+      echo "| / \\";
+      echo "|____";
+      ;;
+  esac
+}
+
+function handleInput() {
+  local c="$guess"
+  local pos=()
+  local i
+  local ans=$(echo $word | tr '[:upper:]' '[:lower:]')
+
+  # figure out positions of letter in the word
+  for (( i = 0; i < ${#word}; i++ )); do
+      if [ "${ans:$i:1}" = "$c" ]; then
+          pos+=($i)
+      fi
+  done
+
+  # keep track of what the user has entered so far
+  letters+=($c)
+
+  # check for incorrect attempt
+  if [[ "${#pos}" = 0 ]]; then
+      let wrongGuesses+=1
+      return
+  fi
+
+  # translate positions to hiddenWord positions and replace blanks with the letter
+  local start
+  local end
+  local p
+  for (( i = 0; i < ${#pos[@]}; i++ )); do
+      p=${pos[$i]}
+      c=${word:$p:1}
+      start=$(( ${pos[$i]} * 2 ))
+      end=$(( start + 2 ))
+
+      # better way to do string manipulation?
+      hiddenWord="${hiddenWord:0:$start}$c ${hiddenWord:end}"
+  done
+}
+
+function getRandomWord() {
+  if [[ -z $dictonary ]]; then
+    word=$(head -$((${RANDOM} % `wc -l < words.txt` + 1)) words.txt | tail -1)
+  else
+    word=$(head -$((${RANDOM} % `wc -l < $dictonary` + 1)) $dictonary | tail -1)
+  fi
+}
+
+function contains() {
+  local e
+
+  for e in "${@:1:1}"; do
+      [[ "$e" == "$2" ]] && return $(true)
+  done
+
+  return $(false)
+}
+
+#
+# Main program.
+#
+
+while  getopts ":w:d:" option; do
+  case "${option}" in
+    w)
+      word=${OPTARG}
+      ;;
+    d)
+      dictonary=${OPTARG}
+      ;;
+  esac
+done
+
+if [[ -z $word ]]; then
+  getRandomWord
+fi
+
+local i
+for (( i=0; i<${#word}; i++ )); do
+    if [[ "${word:$i:1}" =~ [[:space:]] ]]; then
+        hiddenWord+="  "
+    else
+        hiddenWord+="_ "
+    fi
+done
+
+if [[ -z $dictonary ]]; then
+  dictonary="words.txt"
+fi
+
+wrongGuesses=0;
+
+printf "\ec"
+printf "Welcome to Hangman. \n \n";
+printf "Using dictonary: $dictonary\n"
+
+while [[ $wrongGuesses -lt 10 ]]; do
+  printWord
+  printGuesses
+  printGallow $wrongGuesses
+
+  read -n 1 -e gues
+
+  if ! isValidInput; then
+    continue
+  fi
+
+  handleInput
+
+  printf "\ec"
+done
+
+echo "Game over! thanks for playing!"
+read -n 1
+exit 0
